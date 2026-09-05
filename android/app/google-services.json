@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "260517582293",
+    "firebase_url": "https://easypdf-1b5e7-default-rtdb.firebaseio.com",
+    "project_id": "easypdf-1b5e7",
+    "storage_bucket": "easypdf-1b5e7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:260517582293:android:b0048338393f6f9e3dd95c",
+        "android_client_info": {
+          "package_name": "com.easypdf.easy_pdf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "260517582293-r3gomke1g2d2dua36o8q7aui16rhnb6c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easypdf.easy_pdf",
+            "certificate_hash": "cd6b7af37770c7edaf1fc68dfc1717fd81f68acb"
+          }
+        },
+        {
+          "client_id": "260517582293-gvvt79acvl6kp3l4988bjp09evqmr4b5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXY14EgLK4X9iph96wYgPd84nBghtdFLc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "260517582293-gvvt79acvl6kp3l4988bjp09evqmr4b5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
