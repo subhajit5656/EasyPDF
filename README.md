@@ -1,6 +1,6 @@
 # EasyPDF
 
-EasyPDF is a Flutter app for scanning or selecting images, arranging pages, and
+EasyPDF is a mobile app for scanning or selecting images, arranging pages, and
 creating a PDF on the device. The login page design is kept intact.
 
 ## App workflow
