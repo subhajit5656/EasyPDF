@@ -62,7 +62,14 @@ def get_current_user(
         ) from None
 
     uid = claims.get("uid")
-    if not isinstance(uid, str) or not uid:
+    email = claims.get("email")
+    display_name = claims.get("name")
+    if (
+        not isinstance(uid, str)
+        or not uid
+        or (email is not None and not isinstance(email, str))
+        or (display_name is not None and not isinstance(display_name, str))
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="A valid Firebase ID token is required",
@@ -70,6 +77,6 @@ def get_current_user(
         )
     return CurrentUser(
         uid=uid,
-        email=claims.get("email"),
-        display_name=claims.get("name"),
+        email=email,
+        display_name=display_name,
     )

@@ -25,7 +25,10 @@ The Compose database port is not published to the host. The API binds only to
 loopback for local use. Never expose this development Compose setup directly to
 the public internet. For production, use managed PostgreSQL, a managed HTTPS
 container platform, workload identity for Firebase Admin, secret management,
-backups, monitoring, and a deployment-time `alembic upgrade head`.
+backups, monitoring, and a deployment-time `alembic upgrade head`. Application
+settings default `APP_ENV` to `production`, which disables interactive API docs.
+The local Compose configuration intentionally defaults to `development` for
+`/docs`; set `APP_ENV=production` for any deployed environment.
 
 ## API
 

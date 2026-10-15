@@ -26,6 +26,10 @@ metadata, not the local file.
 See [backend/README.md](backend/README.md) for local setup, API endpoints, tests,
 and deployment boundaries.
 
+See [docs/PROJECT_RCA_SECURITY_SDLC.md](docs/PROJECT_RCA_SECURITY_SDLC.md) for
+the source-level RCA, DFD, request lifecycle, SDLC/release gates, security
+follow-ups, and hosting-cost notes.
+
 ## Production and Play Store release checklist
 
 The repository is not a one-command production release. Before launch:

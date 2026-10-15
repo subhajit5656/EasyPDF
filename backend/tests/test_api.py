@@ -1,10 +1,25 @@
 import app.auth as api_auth
 from app.auth import CurrentUser, get_current_user
+from app.config import Settings
 
 
 def test_health_endpoints(client):
     assert client.get("/health/live").json() == {"status": "ok"}
     assert client.get("/health/ready").json() == {"status": "ready"}
+
+
+def test_api_docs_are_disabled_outside_development(client, monkeypatch):
+    monkeypatch.delenv("APP_ENV", raising=False)
+    settings = Settings(
+        _env_file=None,
+        database_url="sqlite+pysqlite:///:memory:",
+        firebase_project_id="easypdf-test",
+    )
+    assert settings.app_env == "production"
+    assert client.app.docs_url is None
+    assert client.app.redoc_url is None
+    assert client.app.openapi_url is None
+    assert client.get("/docs").status_code == 404
 
 
 def test_document_endpoints_require_authentication(client):
@@ -49,6 +64,22 @@ def test_invalid_firebase_token_is_rejected(client, monkeypatch):
     response = client.get(
         "/v1/me",
         headers={"Authorization": "Bearer invalid-test-token"},
+    )
+    assert response.status_code == 401
+
+
+def test_malformed_firebase_claims_are_rejected(client, monkeypatch):
+    client.app.dependency_overrides.pop(get_current_user)
+    monkeypatch.setattr(api_auth, "_firebase_app", lambda: object())
+    monkeypatch.setattr(
+        api_auth.firebase_auth,
+        "verify_id_token",
+        lambda token, **kwargs: {"uid": "verified-user", "email": ["not", "a string"]},
+    )
+
+    response = client.get(
+        "/v1/me",
+        headers={"Authorization": "Bearer test-token"},
     )
     assert response.status_code == 401
 
