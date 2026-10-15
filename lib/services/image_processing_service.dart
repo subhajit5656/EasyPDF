@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-/// Handles capturing/picking images and running edge-detection auto-crop,
+/// Handles capturing/scanning and selecting page images,
 /// per PRD section 3.2 ("Auto Crop & Scan").
 ///
 /// NOTE: `edge_detection` opens its own native scanner camera UI (with
@@ -40,33 +40,28 @@ class ImageProcessingService {
     }
   }
 
-  /// Lets the user pick one or more images from the gallery. Each picked
-  /// image is then passed through auto-crop individually.
+  /// Lets the user pick one or more images from the gallery.
   Future<List<File>> pickFromGallery() async {
     final picker = ImagePicker();
-    final picked = await picker.pickMultiImage();
+    final picked = await picker.pickMultiImage(
+      maxWidth: 2200,
+      maxHeight: 2200,
+      imageQuality: 85,
+      limit: 50,
+      requestFullMetadata: false,
+    );
     return picked.map((x) => File(x.path)).toList();
   }
 
-  /// Runs auto-crop/edge-detection on an already-selected gallery image.
-  Future<File> autoCropExistingImage(File source) async {
-    final dir = await getTemporaryDirectory();
-    final outputPath =
-        '${dir.path}/crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-    try {
-      final success = await EdgeDetection.detectEdge(
-        outputPath,
-        canUseGallery: true,
-        androidScanTitle: 'Scan',
-        androidCropTitle: 'Crop',
-        androidCropBlackWhiteTitle: 'Black White',
-        androidCropReset: 'Reset',
-      );
-      if (success == true) return File(outputPath);
-    } catch (_) {
-      // fall through to returning the original if cropping fails
-    }
-    return source;
+  /// Lets the user replace a page with a specific gallery image.
+  Future<File?> pickReplacementImage() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 2200,
+      maxHeight: 2200,
+      imageQuality: 85,
+      requestFullMetadata: false,
+    );
+    return picked == null ? null : File(picked.path);
   }
 }

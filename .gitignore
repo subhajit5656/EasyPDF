@@ -65,3 +65,11 @@ migrate_working_dir/
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
+
+# Local service and signing secrets
+backend/.env
+backend/.venv/
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+*service-account*.json

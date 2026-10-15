@@ -156,8 +156,8 @@ class _LoginScreenState extends State<LoginScreen>
                 const SizedBox(height: 6),
                 Text(
                   isSignUp
-                      ? 'Sign up to sync and back up all your scans'
-                      : 'Enter your details to access your files',
+                      ? 'Sign up to sync your document details across devices'
+                      : 'Enter your details to access your EasyPDF account',
                   style: const TextStyle(fontSize: 13, color: textMuted),
                   textAlign: TextAlign.center,
                 ),
@@ -304,7 +304,9 @@ class _LoginScreenState extends State<LoginScreen>
                                 nav.pushReplacementNamed('/dashboard');
                               }
                             } on FirebaseAuthException catch (e) {
-                              setModalState(() => modalLoading = false);
+                              if (ctx.mounted) {
+                                setModalState(() => modalLoading = false);
+                              }
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

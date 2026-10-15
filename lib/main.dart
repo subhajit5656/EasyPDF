@@ -23,6 +23,7 @@ class EasyPDFApp extends StatelessWidget {
       title: 'EasyPDF',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      routes: {'/dashboard': (_) => const DashboardScreen()},
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {

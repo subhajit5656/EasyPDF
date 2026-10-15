@@ -1,11 +1,14 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
 import '../../app_theme.dart';
 import '../../models/pdf_page_model.dart';
+import '../../services/api_service.dart';
 import '../../services/image_processing_service.dart';
 import '../../services/pdf_service.dart';
 
-/// PRD 3.2 Post-Selection Flow: preview all pages, reorder/delete/re-crop,
+/// PRD 3.2 Post-Selection Flow: preview all pages, reorder/delete/replace,
 /// then "Convert to PDF" → Save / Share.
 class PreviewPagesScreen extends StatefulWidget {
   final List<PdfPageModel> initialPages;
@@ -19,7 +22,9 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
   late List<PdfPageModel> _pages;
   final _pdfService = PdfService();
   final _imageService = ImageProcessingService();
+  final _apiService = ApiService();
   bool _converting = false;
+  bool _replacing = false;
 
   @override
   void initState() {
@@ -28,6 +33,7 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
   }
 
   void _reorder(int oldIndex, int newIndex) {
+    if (_converting || _replacing) return;
     setState(() {
       if (newIndex > oldIndex) newIndex -= 1;
       final item = _pages.removeAt(oldIndex);
@@ -36,28 +42,56 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
   }
 
   void _delete(int index) {
+    if (_converting || _replacing) return;
     setState(() => _pages.removeAt(index));
   }
 
-  Future<void> _recrop(int index) async {
-    final source = _pages[index].originalFile ?? _pages[index].imageFile;
-    final recropped = await _imageService.autoCropExistingImage(source);
-    setState(() {
-      _pages[index].imageFile = recropped;
-    });
+  Future<void> _replacePage(int index) async {
+    setState(() => _replacing = true);
+    try {
+      final replacement = await _imageService.pickReplacementImage();
+      if (replacement == null || !mounted) return;
+      setState(() {
+        _pages[index].imageFile = replacement;
+        _pages[index].originalFile = replacement;
+      });
+    } catch (error) {
+      if (mounted) _showMessage('Could not replace the image: $error');
+    } finally {
+      if (mounted) setState(() => _replacing = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> _convertAndFinish() async {
-    if (_pages.isEmpty) return;
+    if (_pages.isEmpty || _converting) return;
     setState(() => _converting = true);
     try {
+      final pageCount = _pages.length;
       final pdf = await _pdfService.generatePdf(_pages);
+      if (!mounted) return;
+      var historyWarning = '';
+      try {
+        await _apiService.recordDocument(
+          fileName: pdf.uri.pathSegments.last,
+          pageCount: pageCount,
+          fileSizeBytes: await pdf.length(),
+        );
+      } on ApiException catch (error) {
+        historyWarning = error.message;
+      }
       if (!mounted) return;
       await showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
         builder: (_) => _ResultSheet(
           file: pdf,
+          historyWarning: historyWarning,
           onShare: () => _pdfService.shareGeneratedPdf(pdf),
         ),
       );
@@ -104,14 +138,18 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.crop_rounded),
-                          tooltip: 'Re-crop',
-                          onPressed: () => _recrop(index),
+                          icon: const Icon(Icons.image_search_rounded),
+                          tooltip: 'Replace image',
+                          onPressed: _replacing || _converting
+                              ? null
+                              : () => _replacePage(index),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline_rounded),
                           tooltip: 'Delete',
-                          onPressed: () => _delete(index),
+                          onPressed: _replacing || _converting
+                              ? null
+                              : () => _delete(index),
                         ),
                         const Icon(Icons.drag_handle_rounded),
                       ],
@@ -124,7 +162,7 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: ElevatedButton(
-            onPressed: (_pages.isEmpty || _converting)
+            onPressed: (_pages.isEmpty || _converting || _replacing)
                 ? null
                 : _convertAndFinish,
             child: _converting
@@ -146,8 +184,13 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
 
 class _ResultSheet extends StatelessWidget {
   final File file;
+  final String historyWarning;
   final VoidCallback onShare;
-  const _ResultSheet({required this.file, required this.onShare});
+  const _ResultSheet({
+    required this.file,
+    required this.historyWarning,
+    required this.onShare,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +206,7 @@ class _ResultSheet extends StatelessWidget {
           const Icon(Icons.check_circle_rounded, color: Colors.green, size: 48),
           const SizedBox(height: 12),
           const Text(
-            'PDF saved to device',
+            'PDF saved on this device',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
@@ -171,6 +214,21 @@ class _ResultSheet extends StatelessWidget {
             file.path.split('/').last,
             style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
           ),
+          if (historyWarning.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'PDF is saved locally, but recent history could not sync: $historyWarning',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Colors.orange),
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            const Text(
+              'The PDF stays on this device. Only its name, size, and page count are synced.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+          ],
           const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: () {
