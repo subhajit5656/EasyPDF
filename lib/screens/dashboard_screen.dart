@@ -76,58 +76,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showImagePickerSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryRed,
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _openImageWorkflow(source: InitialImageSource.camera);
-                },
-                icon: const Icon(Icons.camera_alt_rounded),
-                label: const Text("Scan with camera"),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryRed,
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _openImageWorkflow(source: InitialImageSource.gallery);
-                },
-                icon: const Icon(Icons.photo_library_rounded),
-                label: const Text("Choose from gallery"),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Future<void> _openImageWorkflow({InitialImageSource? source}) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -162,37 +110,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: RefreshIndicator(
         onRefresh: _refreshDocuments,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
           children: [
-            Text(
-              'Welcome back, $userName',
-              style: const TextStyle(
-                color: AppTheme.textDark,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'YOUR WORKSPACE',
+                        style: TextStyle(
+                          color: AppTheme.primaryRed,
+                          fontSize: 11,
+                          letterSpacing: 1.4,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Hi, $userName',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textDark,
+                          fontSize: 25,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentRed,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppTheme.primaryRed,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             Text(
-              user?.email ?? 'Your documents, ready when you are.',
-              style: const TextStyle(color: AppTheme.textGrey, fontSize: 14),
+              'Scan, arrange, and share your documents.',
+              style: TextStyle(color: AppTheme.textGrey, fontSize: 14),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
             _buildCreateCard(),
-            const SizedBox(height: 28),
-            const Text(
-              'How it works',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            _buildWorkflow(),
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
             Row(
               children: [
                 const Expanded(
                   child: Text(
-                    'Recent PDFs',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    'Recent documents',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
                   ),
                 ),
                 IconButton(
@@ -203,16 +178,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const Padding(
-              padding: EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.only(bottom: 10, top: 2),
               child: Text(
-                'Your PDF files stay on this device; only document details sync.',
+                'Files stay on this device; only document details sync.',
                 style: TextStyle(color: AppTheme.textGrey, fontSize: 12),
               ),
             ),
             const SizedBox(height: 4),
             _buildRecentDocuments(),
-            const SizedBox(height: 20),
-            _buildComingSoon(),
           ],
         ),
       ),
@@ -223,104 +196,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: AppTheme.primaryRed,
-        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE53935), Color(0xFFB71C1C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryRed.withValues(alpha: 0.22),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: AppTheme.primaryRed.withValues(alpha: 0.20),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.picture_as_pdf_rounded,
-            size: 38,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'Create a PDF',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Scan pages or pick photos. Reorder them, then save and share.',
-            style: TextStyle(color: Colors.white, height: 1.4),
-          ),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FilledButton.icon(
-                onPressed: _showImagePickerSheet,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Start scanning'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppTheme.primaryRed,
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: () =>
-                    _openImageWorkflow(source: InitialImageSource.gallery),
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Choose photos'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white70),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkflow() {
-    const steps = [
-      (Icons.camera_alt_outlined, 'Capture or select'),
-      (Icons.swap_vert_rounded, 'Arrange your pages'),
-      (Icons.share_outlined, 'Save or share'),
-    ];
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        child: Row(
-          children: [
-            for (var index = 0; index < steps.length; index++) ...[
               Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(steps[index].$1, color: AppTheme.primaryRed),
-                    const SizedBox(height: 8),
-                    Text(
-                      steps[index].$2,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 11),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: const Text(
+                        'DOCUMENT STUDIO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text(
+                      'Paperwork,\nmade simple.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 27,
+                        height: 1.08,
+                      ),
                     ),
                   ],
                 ),
               ),
-              if (index < steps.length - 1)
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppTheme.textGrey,
-                ),
+              const SizedBox(width: 10),
+              const Icon(
+                Icons.document_scanner_rounded,
+                size: 62,
+                color: Color(0x66FFFFFF),
+              ),
             ],
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Capture pages, fine-tune your document, then save or share.',
+            style: TextStyle(color: Colors.white, height: 1.4),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () =>
+                      _openImageWorkflow(source: InitialImageSource.camera),
+                  icon: const Icon(Icons.document_scanner_rounded, size: 18),
+                  label: const Text('Scan'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppTheme.primaryRed,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      _openImageWorkflow(source: InitialImageSource.gallery),
+                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  label: const Text('Import photos'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white70),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => _openImageWorkflow(
+                source: InitialImageSource.galleryScan,
+              ),
+              icon: const Icon(Icons.crop_rounded, size: 18),
+              label: const Text('Auto-crop a gallery photo'),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -350,25 +338,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
     if (_documents!.isEmpty) {
-      return const Card(
-        elevation: 0,
-        child: ListTile(
-          leading: Icon(Icons.description_outlined, color: AppTheme.textGrey),
-          title: Text('No PDFs yet'),
-          subtitle: Text('Your recent document details will appear here.'),
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFEDEFF2)),
+        ),
+        child: const Column(
+          children: [
+            Icon(
+              Icons.folder_open_rounded,
+              size: 36,
+              color: AppTheme.primaryRed,
+            ),
+            SizedBox(height: 9),
+            Text(
+              'No PDFs yet',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Your recent document details will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textGrey, fontSize: 12),
+            ),
+          ],
         ),
       );
     }
-    return Card(
-      elevation: 0,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEDEFF2)),
+      ),
       child: Column(
         children: [
           for (var index = 0; index < _documents!.length; index++) ...[
             if (index > 0) const Divider(height: 1, indent: 16, endIndent: 16),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: AppTheme.accentRed,
-                child: Icon(Icons.picture_as_pdf_rounded, color: AppTheme.primaryRed),
+              leading: Container(
+                width: 44,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentRed,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.picture_as_pdf_rounded,
+                  color: AppTheme.primaryRed,
+                ),
               ),
               title: Text(
                 _documents![index].fileName,
@@ -379,10 +399,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 '${_documents![index].pageCount} pages · '
                 '${_formatDate(_documents![index].createdAt)}',
               ),
-              trailing: IconButton(
-                tooltip: 'Remove from history',
-                onPressed: () => _removeFromHistory(_documents![index]),
-                icon: const Icon(Icons.delete_outline_rounded),
+              trailing: PopupMenuButton<String>(
+                tooltip: 'Document options',
+                onSelected: (value) {
+                  if (value == 'remove') {
+                    _removeFromHistory(_documents![index]);
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'remove',
+                    child: Text('Remove from history'),
+                  ),
+                ],
               ),
             ),
           ],
@@ -393,23 +422,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       return 'Today';
     }
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}';
   }
 
-  Widget _buildComingSoon() {
-    return const Card(
-      elevation: 0,
-      color: Color(0xFFEBEFF2),
-      child: ListTile(
-        leading: Icon(Icons.auto_awesome_outlined, color: AppTheme.textGrey),
-        title: Text('More PDF tools'),
-        subtitle: Text('PDF conversion, merge, and text extraction are planned.'),
-        trailing: Icon(Icons.lock_outline_rounded, color: AppTheme.textGrey),
-      ),
-    );
-  }
 }

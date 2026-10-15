@@ -1,10 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../../app_theme.dart';
 import '../../models/pdf_page_model.dart';
 import '../../services/image_processing_service.dart';
 import 'preview_pages_screen.dart';
 
-enum InitialImageSource { camera, gallery }
+enum InitialImageSource { camera, gallery, galleryScan }
 
 /// Provides camera scanning and gallery selection for a PDF document.
 class ImageSourceScreen extends StatefulWidget {
@@ -29,8 +31,13 @@ class _ImageSourceScreenState extends State<ImageSourceScreen> {
       switch (widget.initialSource) {
         case InitialImageSource.camera:
           _useCamera();
+          break;
         case InitialImageSource.gallery:
           _useGallery();
+          break;
+        case InitialImageSource.galleryScan:
+          _useGalleryScanner();
+          break;
         case null:
           break;
       }
@@ -43,14 +50,26 @@ class _ImageSourceScreenState extends State<ImageSourceScreen> {
       // Loop lets the user capture multiple pages before finalizing.
       bool addAnother = true;
       while (addAnother) {
-        final scanned = await _imageService.scanWithCamera();
+        File? scanned;
+        try {
+          scanned = await _imageService.scanWithCamera();
+        } catch (_) {
+          scanned = await _imageService.captureWithCamera();
+          if (scanned != null && mounted) {
+            _showError(
+              'Auto scan could not start. The camera photo was added without '
+              'document auto-cropping.',
+            );
+          }
+        }
         if (!mounted) return;
         if (scanned == null) break; // user backed out
+        final capturedPage = scanned;
         setState(() {
           _pages.add(
             PdfPageModel(
               id: DateTime.now().microsecondsSinceEpoch.toString(),
-              imageFile: scanned,
+              imageFile: capturedPage,
             ),
           );
         });
@@ -63,9 +82,12 @@ class _ImageSourceScreenState extends State<ImageSourceScreen> {
         if (!mounted) return;
       }
       if (_pages.isNotEmpty) _goToPreview();
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
-        _showError('Camera scan failed. Check camera access and try again.');
+        _showError(
+          'Could not open the camera. Check camera permission in system '
+          'settings and try again ($error).',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -90,6 +112,36 @@ class _ImageSourceScreenState extends State<ImageSourceScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _useGalleryScanner() async {
+    setState(() => _busy = true);
+    try {
+      var addAnother = true;
+      while (addAnother) {
+        final scanned = await _imageService.scanFromGallery();
+        if (!mounted || scanned == null) break;
+        final capturedPage = scanned;
+        setState(() {
+          _pages.add(
+            PdfPageModel(
+              id: DateTime.now().microsecondsSinceEpoch.toString(),
+              imageFile: capturedPage,
+            ),
+          );
+        });
+        if (_pages.length >= 50) {
+          _showError('A PDF can contain up to 50 pages.');
+          break;
+        }
+        addAnother = await _askCaptureAnother() ?? false;
+      }
+      if (mounted && _pages.isNotEmpty) _goToPreview();
+    } catch (error) {
+      if (mounted) _showError('Gallery auto-crop failed: $error');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _useGallery() async {
@@ -156,6 +208,13 @@ class _ImageSourceScreenState extends State<ImageSourceScreen> {
               label: 'Gallery',
               subtitle: 'Pick one or more images',
               onTap: _busy ? null : _useGallery,
+            ),
+            const SizedBox(height: 16),
+            _SourceButton(
+              icon: Icons.crop_rounded,
+              label: 'Gallery auto-crop',
+              subtitle: 'Select and crop a document page',
+              onTap: _busy ? null : _useGalleryScanner,
             ),
             if (_busy) ...[
               const SizedBox(height: 32),

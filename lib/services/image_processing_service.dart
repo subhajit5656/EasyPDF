@@ -20,6 +20,25 @@ class ImageProcessingService {
       throw Exception('Camera permission denied');
     }
 
+    return _runDocumentScanner(canUseGallery: false);
+  }
+
+  /// Opens the native scanner with its gallery-selection option enabled.
+  Future<File?> scanFromGallery() => _runDocumentScanner(canUseGallery: true);
+
+  /// Captures a photo with the platform camera if the document scanner fails.
+  Future<File?> captureWithCamera() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxWidth: 2200,
+      maxHeight: 2200,
+      imageQuality: 85,
+      requestFullMetadata: false,
+    );
+    return picked == null ? null : File(picked.path);
+  }
+
+  Future<File?> _runDocumentScanner({required bool canUseGallery}) async {
     final dir = await getTemporaryDirectory();
     final outputPath =
         '${dir.path}/scan_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -27,7 +46,7 @@ class ImageProcessingService {
     try {
       final success = await EdgeDetection.detectEdge(
         outputPath,
-        canUseGallery: false,
+        canUseGallery: canUseGallery,
         androidScanTitle: 'Scan Document',
         androidCropTitle: 'Crop',
         androidCropBlackWhiteTitle: 'Black White',

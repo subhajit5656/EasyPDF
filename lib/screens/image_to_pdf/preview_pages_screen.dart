@@ -62,6 +62,272 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
     }
   }
 
+  Future<void> _editPage(int index) async {
+    final page = _pages[index];
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.viewInsetsOf(context).bottom + 20,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Edit page ${index + 1}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Add text, simple symbols, or an image overlay to this page.',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: page.overlays.length >= 20
+                            ? null
+                            : () async {
+                                final overlay = await _promptTextOverlay();
+                                if (overlay == null ||
+                                    !mounted ||
+                                    !sheetContext.mounted) {
+                                  return;
+                                }
+                                setState(() => page.overlays.add(overlay));
+                                setSheetState(() {});
+                              },
+                        icon: const Icon(Icons.text_fields_rounded),
+                        label: const Text('Add text'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: page.overlays.length >= 20
+                            ? null
+                            : () async {
+                                final overlay = await _promptSymbolOverlay();
+                                if (overlay == null ||
+                                    !mounted ||
+                                    !sheetContext.mounted) {
+                                  return;
+                                }
+                                setState(() => page.overlays.add(overlay));
+                                setSheetState(() {});
+                              },
+                        icon: const Icon(Icons.tag_rounded),
+                        label: const Text('Add symbol'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: page.overlays.length >= 20
+                            ? null
+                            : () async {
+                                try {
+                                  final file = await _imageService
+                                      .pickReplacementImage();
+                                  if (file == null ||
+                                      !mounted ||
+                                      !sheetContext.mounted) {
+                                    return;
+                                  }
+                                  setState(
+                                    () => page.overlays.add(
+                                      PdfPageOverlay(imageFile: file),
+                                    ),
+                                  );
+                                  setSheetState(() {});
+                                } catch (error) {
+                                  if (mounted) {
+                                    _showMessage(
+                                      'Could not add the image: $error',
+                                    );
+                                  }
+                                }
+                              },
+                        icon: const Icon(Icons.add_photo_alternate_outlined),
+                        label: const Text('Add image'),
+                      ),
+                    ],
+                  ),
+                  if (page.overlays.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    for (var overlayIndex = 0;
+                        overlayIndex < page.overlays.length;
+                        overlayIndex++)
+                      ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          page.overlays[overlayIndex].imageFile == null
+                              ? Icons.text_fields_rounded
+                              : Icons.image_outlined,
+                        ),
+                        title: Text(
+                          page.overlays[overlayIndex].text ??
+                              'Image overlay',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: page.overlays[overlayIndex].text == null
+                            ? null
+                            : Text(page.overlays[overlayIndex].fontFamily),
+                        trailing: IconButton(
+                          tooltip: 'Remove overlay',
+                          onPressed: () {
+                            setState(
+                              () => page.overlays.removeAt(overlayIndex),
+                            );
+                            setSheetState(() {});
+                          },
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ),
+                  ],
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      child: const Text('Done'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<PdfPageOverlay?> _promptTextOverlay() async {
+    final controller = TextEditingController();
+    var fontFamily = 'Helvetica';
+    var colorValue = 0xFF212121;
+    const colors = {
+      'Black': 0xFF212121,
+      'Red': 0xFFE53935,
+      'Blue': 0xFF1565C0,
+      'Green': 0xFF2E7D32,
+    };
+    final overlay = await showDialog<PdfPageOverlay>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Add text'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLength: 120,
+                decoration: const InputDecoration(
+                  labelText: 'Text',
+                  hintText: 'Type a note or label',
+                ),
+              ),
+              DropdownButtonFormField<String>(
+                value: fontFamily,
+                decoration: const InputDecoration(labelText: 'Font'),
+                items: const [
+                  DropdownMenuItem(value: 'Helvetica', child: Text('Helvetica')),
+                  DropdownMenuItem(value: 'Times', child: Text('Times')),
+                  DropdownMenuItem(value: 'Courier', child: Text('Courier')),
+                ],
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => fontFamily = value);
+                },
+              ),
+              DropdownButtonFormField<int>(
+                value: colorValue,
+                decoration: const InputDecoration(labelText: 'Color'),
+                items: [
+                  for (final entry in colors.entries)
+                    DropdownMenuItem(
+                      value: entry.value,
+                      child: Text(entry.key),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => colorValue = value);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final text = controller.text.trim();
+                if (text.isEmpty) return;
+                Navigator.pop(
+                  dialogContext,
+                  PdfPageOverlay(
+                    text: text,
+                    fontFamily: fontFamily,
+                    colorValue: colorValue,
+                  ),
+                );
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    return overlay;
+  }
+
+  Future<PdfPageOverlay?> _promptSymbolOverlay() {
+    const symbols = ['*', '+', '#', '@', '!'];
+    return showDialog<PdfPageOverlay>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Add a symbol'),
+        content: Wrap(
+          spacing: 8,
+          children: [
+            for (final symbol in symbols)
+              ActionChip(
+                label: Text(
+                  symbol,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: () => Navigator.pop(
+                  dialogContext,
+                  PdfPageOverlay(text: symbol, fontFamily: 'Helvetica'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -134,24 +400,34 @@ class _PreviewPagesScreenState extends State<PreviewPagesScreen> {
                       ),
                     ),
                     title: Text('Page ${index + 1}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.image_search_rounded),
-                          tooltip: 'Replace image',
-                          onPressed: _replacing || _converting
-                              ? null
-                              : () => _replacePage(index),
+                    subtitle: page.overlays.isEmpty
+                        ? null
+                        : Text('${page.overlays.length} edit(s)'),
+                    trailing: PopupMenuButton<String>(
+                      tooltip: 'Page options',
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'edit':
+                            _editPage(index);
+                            break;
+                          case 'replace':
+                            _replacePage(index);
+                            break;
+                          case 'delete':
+                            _delete(index);
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(value: 'edit', child: Text('Edit page')),
+                        PopupMenuItem(
+                          value: 'replace',
+                          child: Text('Replace image'),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded),
-                          tooltip: 'Delete',
-                          onPressed: _replacing || _converting
-                              ? null
-                              : () => _delete(index),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Delete page'),
                         ),
-                        const Icon(Icons.drag_handle_rounded),
                       ],
                     ),
                   ),

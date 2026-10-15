@@ -7,13 +7,20 @@ creating a PDF on the device. The login page design is kept intact.
 
 1. Sign in with Firebase Authentication.
 2. From the dashboard, scan pages or select photos.
-3. Replace/reorder pages in the preview and create a PDF.
+3. Replace/reorder pages, add text/symbol/image overlays, and choose a font and
+   color before creating the PDF.
 4. The PDF is saved in the app's private documents directory and can be shared.
 5. If the API is configured, the signed-in account's recent history syncs the
    PDF name, page count, file size, and creation time.
 
 The PDF itself is not uploaded. Removing an item from history removes only its
 metadata, not the local file.
+
+Camera scanning uses the native document scanner for automatic cropping. If
+that scanner cannot start, EasyPDF falls back to a normal camera photo, which
+is added without automatic document cropping. Gallery imports are not
+automatically edge-detected or cropped; use **Gallery auto-crop** to select
+and crop individual gallery pages in the native scanner.
 
 ## Stack
 
