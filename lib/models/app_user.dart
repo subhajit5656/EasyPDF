@@ -1,4 +1,4 @@
-/// Simple user profile model synced to Firestore/Realtime DB.
+/// Profile fields displayed by the application.
 class AppUser {
   final String uid;
   final String? name;

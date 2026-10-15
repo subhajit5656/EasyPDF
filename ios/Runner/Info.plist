@@ -24,6 +24,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>EasyPDF uses the camera to scan documents you choose to convert.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>EasyPDF lets you select photos to convert into a PDF.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
